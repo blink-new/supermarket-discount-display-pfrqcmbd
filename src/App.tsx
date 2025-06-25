@@ -137,7 +137,7 @@ function App() {
                 discount: row[2] || '', // Column C
                 validUntil: row[5] || '', // Column F
                 eanCode: row[6] || '', // Column G
-                image: row[7] || '' // Column H
+                image: row[0] || '' // Column A (was row[7] for H)
               }
               
               // Only add products with essential data
