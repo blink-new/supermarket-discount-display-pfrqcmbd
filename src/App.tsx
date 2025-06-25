@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardTitle } from './components/ui/card'
 import { Badge } from './components/ui/badge'
 import { Skeleton } from './components/ui/skeleton'
-import { AlertCircle, Calendar, Hash, Package, RefreshCw } from 'lucide-react'
+import { AlertCircle, Calendar, Package, RefreshCw, Search } from 'lucide-react'
 import JsBarcode from 'jsbarcode'
 import Papa from 'papaparse'
 
@@ -19,6 +19,8 @@ function App() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [generatingCouponIndex, setGeneratingCouponIndex] = useState<number | null>(null)
 
   const SPREADSHEET_ID = '1iCp5Pf5CPu_sbv8K3MQhkpOB51gvYuB7iytoZS8BM4A'
   const SHEET_GID = '517842932'
@@ -220,6 +222,19 @@ function App() {
     return `https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=300&h=200&fit=crop&crop=center`
   }
 
+  const handleGenerateCoupon = (index: number) => {
+    setGeneratingCouponIndex(index)
+    setTimeout(() => {
+      setGeneratingCouponIndex(null)
+      // In a real app, you would generate and display the unique code here
+      // For now, we just simulate the loading
+    }, 1500) // Simulate 1.5 seconds of loading
+  }
+
+  const filteredProducts = products.filter(product =>
+    product.name.toLowerCase().includes(searchTerm.toLowerCase())
+  )
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
@@ -289,16 +304,34 @@ function App() {
           </div>
         </div>
 
+        {/* Search Bar */}
+        <div className="mb-8 max-w-2xl mx-auto">
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search for your favorite coupon..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-12 pr-4 py-3 border-0 shadow-lg rounded-full bg-white/80 backdrop-blur-sm focus:ring-2 focus:ring-blue-500 transition-all"
+            />
+          </div>
+        </div>
+
         {/* Products Grid */}
-        {products.length === 0 ? (
+        {filteredProducts.length === 0 ? (
           <div className="text-center py-16">
             <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">No discounts available</h3>
-            <p className="text-gray-600">Check back later for new deals!</p>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              {searchTerm ? `No results for "${searchTerm}"` : "No discounts available"}
+            </h3>
+            <p className="text-gray-600">
+              {searchTerm ? "Try a different search term." : "Check back later for new deals!"}
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {products.map((product, index) => (
+            {filteredProducts.map((product, index) => (
               <Card 
                 key={index} 
                 className="overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 bg-white/80 backdrop-blur-sm border-0 shadow-lg"
@@ -327,18 +360,39 @@ function App() {
                     {product.name}
                   </CardTitle>
 
-                  {/* EAN Barcode */}
-                  <div className="mb-4 p-3 bg-white rounded-lg border border-gray-200">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Hash className="h-4 w-4 text-gray-500" />
-                      <span className="text-sm font-medium text-gray-700">EAN: {product.eanCode}</span>
-                    </div>
-                    <div className="flex justify-center">
-                      <canvas 
-                        id={`barcode-${index}`}
-                        className="max-w-full"
-                      />
-                    </div>
+                  {/* Coupon Generation Button / Loading State */}
+                  <div className="mb-4 p-3 bg-white rounded-lg border border-gray-200 text-center">
+                    {generatingCouponIndex === index ? (
+                      <div className="flex flex-col items-center justify-center h-20">
+                        <RefreshCw className="h-6 w-6 text-blue-500 animate-spin mb-2" />
+                        <p className="text-sm text-gray-600">Generating unique code...</p>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => handleGenerateCoupon(index)}
+                        className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="24"
+                          height="24"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="lucide lucide-barcode"
+                        >
+                          <path d="M3 5v14" />
+                          <path d="M7 5v14" />
+                          <path d="M11 5v14" />
+                          <path d="M15 5v14" />
+                          <path d="M19 5v14" />
+                        </svg>
+                        Coupon generieren
+                      </button>
+                    )}
                   </div>
 
                   {/* Valid Until */}
